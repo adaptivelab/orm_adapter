@@ -41,8 +41,8 @@ module CouchRest
             get(conditions.values.first)
           else
             result = klass.send("by_#{conditions.keys.first}", {:key => conditions.values.first, :limit => 1})
-            # Fix the fact that find_first should return nil and not an empty array if it finds not results
-            return result.blank? ? nil : result
+            # Fix the fact that find_first should return either nil or the found element and not an array
+            return result.first
           end
         end
 

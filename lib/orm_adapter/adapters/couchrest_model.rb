@@ -10,7 +10,7 @@ module CouchRest
           doc.destroy
         end
       end
-    
+
       class OrmAdapter < ::OrmAdapter::Base
         # Do not consider these to be part of the class list
         def self.except_classes
@@ -40,16 +40,18 @@ module CouchRest
           if conditions.keys.first == :id
             get(conditions.values.first)
           else
-            send("by_#{conditions.keys.first}", {:key => conditions.values.first, :limit => 1})
+            result = klass.send("by_#{conditions.keys.first}", {:key => conditions.values.first, :limit => 1})
+            # Fix the fact that find_first should return nil and not an empty array if it finds not results
+            return result.blank? ? nil : result
           end
         end
-        
+
         # Find all models matching conditions
         def find_all(conditions)
           if conditions.keys.first == :id
             get(conditions.values.first)
           else
-            send("by_#{conditions.keys.first}", {:key => conditions.values.first})
+            klass.send("by_#{conditions.keys.first}", {:key => conditions.values.first})
           end
         end
 
@@ -57,7 +59,7 @@ module CouchRest
         def create!(attributes)
           klass.create!(attributes)
         end
-  
+
         protected
 
         # converts and documents to ids

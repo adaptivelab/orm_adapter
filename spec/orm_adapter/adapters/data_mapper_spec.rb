@@ -12,6 +12,7 @@ else
       include DataMapper::Resource
       property :id,   Serial
       property :name, String
+      property :rating, Integer
       has n, :notes, :child_key => [:owner_id]
     end
 
@@ -31,14 +32,6 @@ else
       before do
         User.destroy
         Note.destroy
-      end
-      
-      describe "the OrmAdapter class" do
-        subject { DataMapper::Resource::OrmAdapter }
-
-        specify "#model_classes should return all of the non abstract model classes (that are not in except_classes)" do
-          subject.model_classes.should == [User, Note]
-        end
       end
 
       it_should_behave_like "example app with orm_adapter" do

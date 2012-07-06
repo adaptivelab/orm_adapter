@@ -1,6 +1,6 @@
-require 'mongoid'
+require 'mongo_mapper'
 
-module Mongoid
+module MongoMapper
   module Document
     module ClassMethods
       include OrmAdapter::ToAdapter
@@ -9,29 +9,31 @@ module Mongoid
     class OrmAdapter < ::OrmAdapter::Base
       # get a list of column names for a given class
       def column_names
-        klass.fields.keys
+        klass.column_names
       end
 
       # @see OrmAdapter::Base#get!
       def get!(id)
-        klass.find(wrap_key(id))
+        klass.find!(wrap_key(id))
       end
 
       # @see OrmAdapter::Base#get
       def get(id)
-        klass.where(:_id => wrap_key(id)).first
+        klass.first({ :id => wrap_key(id) })
       end
 
       # @see OrmAdapter::Base#find_first
-      def find_first(options = {})
-        conditions, order = extract_conditions_and_order!(options)
-        klass.limit(1).where(conditions_to_fields(conditions)).order_by(order).first
+      def find_first(conditions = {})
+        conditions, order = extract_conditions_and_order!(conditions)
+        conditions = conditions.merge(:sort => order) unless order.nil?
+        klass.first(conditions_to_fields(conditions))
       end
 
       # @see OrmAdapter::Base#find_all
-      def find_all(options = {})
-        conditions, order = extract_conditions_and_order!(options)
-        klass.where(conditions_to_fields(conditions)).order_by(order)
+      def find_all(conditions = {})
+        conditions, order = extract_conditions_and_order!(conditions)
+        conditions = conditions.merge(:sort => order) unless order.nil?
+        klass.all(conditions_to_fields(conditions))
       end
 
       # @see OrmAdapter::Base#create!
@@ -49,10 +51,8 @@ module Mongoid
       # converts and documents to ids
       def conditions_to_fields(conditions)
         conditions.inject({}) do |fields, (key, value)|
-          if value.is_a?(Mongoid::Document) && klass.fields.keys.include?("#{key}_id")
+          if value.is_a?(MongoMapper::Document) && klass.key?("#{key}_id")
             fields.merge("#{key}_id" => value.id)
-          elsif key.to_s == 'id'
-            fields.merge('_id' => value)
           else
             fields.merge(key => value)
           end

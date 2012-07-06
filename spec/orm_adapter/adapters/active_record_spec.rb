@@ -8,14 +8,13 @@ else
 
   ActiveRecord::Migration.suppress_messages do
     ActiveRecord::Schema.define(:version => 0) do
-      create_table(:users, :force => true) {|t| t.string :name; t.belongs_to :site }
+      create_table(:users, :force => true) {|t| t.string :name; t.integer :rating; }
       create_table(:notes, :force => true) {|t| t.belongs_to :owner, :polymorphic => true }
     end
   end
   
   module ArOrmSpec
     class User < ActiveRecord::Base
-      belongs_to :site, :class_name => "ArOrmSpec::Site"
       has_many :notes, :as => :owner
     end
 
@@ -32,18 +31,6 @@ else
       before do
         User.delete_all
         Note.delete_all
-      end
-
-      describe "the OrmAdapter class" do
-        subject { ActiveRecord::Base::OrmAdapter }
-
-        specify "#except_classes should return the names of active record session store classes" do
-          subject.except_classes.should == ["CGI::Session::ActiveRecordStore::Session", "ActiveRecord::SessionStore::Session"]
-        end
-
-        specify "#model_classes should return all of the non abstract model classes (that are not in except_classes)" do
-          subject.model_classes.should include(User, Note)
-        end
       end
     
       it_should_behave_like "example app with orm_adapter" do
